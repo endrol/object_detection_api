@@ -1,6 +1,6 @@
 import tensorflow as tf
-from anchor_generator import AnchorBox
-from iou_calculate import compute_iou
+from utils.anchor_generator import AnchorBox
+from utils.iou_calculate import compute_iou
 
 
 class LabelEncoder:

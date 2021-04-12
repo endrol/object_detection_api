@@ -1,7 +1,8 @@
 import tensorflow as tf
-from bbox_util import swap_xy, convert_to_xywh
+from utils.bbox_util import swap_xy, convert_to_xywh
 '''some processing method including random flip, resize
 '''
+
 
 def random_flip_horizontal(image, boxes):
     """Flips image and boxes horizontally with 50% chance
@@ -24,7 +25,7 @@ def random_flip_horizontal(image, boxes):
 
 
 def resize_and_pad_image(
-    image, min_side=800.0, max_side=1333.0, jitter=[640, 1024], stride=128.0
+    image, min_side=300.0, max_side=600.0, jitter=[240, 480], stride=128.0
 ):
     """Resizes and pads image while preserving aspect ratio.
 
@@ -86,7 +87,7 @@ def preprocess_data(sample):
     image = sample["image"]
     bbox = swap_xy(sample["objects"]["bbox"])
     class_id = tf.cast(sample["objects"]["label"], dtype=tf.int32)
-
+    # import pdb; pdb.set_trace()
     image, bbox = random_flip_horizontal(image, bbox)
     image, image_shape, _ = resize_and_pad_image(image)
 

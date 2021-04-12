@@ -1,5 +1,5 @@
 import tensorflow as tf
-from bbox_util import convert_to_corners
+from utils.bbox_util import convert_to_corners
 '''compute the pairwise IOU
 '''
 
