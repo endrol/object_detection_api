@@ -7,9 +7,9 @@ import numpy as np
 
 
 
-config = tf.compat.v1.ConfigProto()
-config.gpu_options.allow_growth = True
-session = tf.compat.v1.Session(config=config)
+# config = tf.compat.v1.ConfigProto()
+# config.gpu_options.allow_growth = True
+# session = tf.compat.v1.Session(config=config)
 
 
 class FeaturePyramid(keras.layers.Layer):

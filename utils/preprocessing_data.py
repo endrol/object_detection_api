@@ -25,7 +25,7 @@ def random_flip_horizontal(image, boxes):
 
 
 def resize_and_pad_image(
-    image, min_side=300.0, max_side=600.0, jitter=[240, 480], stride=128.0
+    image, min_side=240.0, max_side=300.0, jitter=[240, 240], stride=128.0
 ):
     """Resizes and pads image while preserving aspect ratio.
 

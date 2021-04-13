@@ -5,3 +5,4 @@
 *.zip
 *.pyc
 /retinanet
+/data
