@@ -4,5 +4,6 @@
 *.lk
 *.zip
 *.pyc
+*.png
 /retinanet
 /data

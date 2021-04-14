@@ -44,7 +44,7 @@ def read_tfrecord(example):
     sample = {}
     sample['image'] = image
     sample['objects'] = {}
-    sample['objects']['bbox'] = tf.stack([bboxes_xmin,bboxes_ymin,bboxes_xmax,bboxes_ymax], axis=-1)
+    sample['objects']['bbox'] = tf.stack([bboxes_ymin,bboxes_xmin,bboxes_ymax,bboxes_xmax], axis=-1)
     sample['objects']['label'] = object_label
 
     return sample

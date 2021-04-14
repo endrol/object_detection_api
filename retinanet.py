@@ -16,11 +16,17 @@ from models.decode_detection import DecodePredictions
 from utils.retinanet_loss import RetinaNetLoss
 from utils.preprocessing_data import preprocess_data, resize_and_pad_image
 from datetime import datetime
-
+    
 
 model_dir = "retinanet/"
+class_voc = ['background',
+             'aeroplane', 'bicycle', 'bird', 'boat',
+             'bottle', 'bus', 'car', 'cat',
+             'chair', 'cow', 'diningtable', 'dog',
+             'horse', 'motorbike', 'person', 'pottedplant',
+             'sheep', 'sofa', 'train', 'tvmonitor']
 
-num_classes = 2
+num_classes = 20
 batch_size = 2
 
 learning_rates = [2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
@@ -48,37 +54,60 @@ callbacks_list = [
 
 '''load dataset both customized and official
 '''
-# train_dataset = get_dataset(filepath='/workspace/data/cats_dogs/train/pets.tfrecord',
-#                             batch_size=batch_size,
-#                             is_training=True)
-# val_dataset = get_dataset(filepath='/workspace/data/cats_dogs/valid/pets.tfrecord',
-#                           batch_size=batch_size,
-#                           is_training=False)
-label_encoder = LabelEncoder()
-(train_dataset, val_dataset), dataset_info = tfds.load(
-    "voc/2007", split=["train", "validation"], with_info=True, data_dir="data"
-)
+train_dataset = get_dataset(filepath='/workspace/data/voc_tf/train.record',
+                            batch_size=batch_size,
+                            is_training=True)
+val_dataset = get_dataset(filepath='/workspace/data/voc_tf/val.record',
+                          batch_size=batch_size,
+                          is_training=False)
+# label_encoder = LabelEncoder()
+# (train_dataset, val_dataset), dataset_info = tfds.load(
+#     "voc/2007", split=["train", "validation"], with_info=True, data_dir="data"
+# )
 
-autotune = tf.data.experimental.AUTOTUNE
-train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=autotune)
-train_dataset = train_dataset.shuffle(8 * batch_size)
-train_dataset = train_dataset.padded_batch(
-    batch_size=batch_size, padding_values=(0.0, 1e-8, -1), drop_remainder=True
-)
-train_dataset = train_dataset.map(
-    label_encoder.encode_batch, num_parallel_calls=autotune
-)
-train_dataset = train_dataset.apply(tf.data.experimental.ignore_errors())
-train_dataset = train_dataset.prefetch(autotune)
+# autotune = tf.data.experimental.AUTOTUNE
+# train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=autotune)
+# train_dataset = train_dataset.shuffle(8 * batch_size)
+# train_dataset = train_dataset.padded_batch(
+#     batch_size=batch_size, padding_values=(0.0, 1e-8, -1), drop_remainder=True
+# )
+# train_dataset = train_dataset.map(
+#     label_encoder.encode_batch, num_parallel_calls=autotune
+# )
+# train_dataset = train_dataset.apply(tf.data.experimental.ignore_errors())
+# train_dataset = train_dataset.prefetch(autotune)
 
-val_dataset = val_dataset.map(preprocess_data, num_parallel_calls=autotune)
-val_dataset = val_dataset.padded_batch(
-    batch_size=1, padding_values=(0.0, 1e-8, -1), drop_remainder=True
-)
-val_dataset = val_dataset.map(label_encoder.encode_batch, num_parallel_calls=autotune)
-val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
-val_dataset = val_dataset.prefetch(autotune)
+# val_dataset = val_dataset.map(preprocess_data, num_parallel_calls=autotune)
+# val_dataset = val_dataset.padded_batch(
+#     batch_size=1, padding_values=(0.0, 1e-8, -1), drop_remainder=True
+# )
+# val_dataset = val_dataset.map(label_encoder.encode_batch, num_parallel_calls=autotune)
+# val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
+# val_dataset = val_dataset.prefetch(autotune)
 
+
+def image_test(
+    image, figsize=(7, 7)
+):
+    """Visualize Detections"""
+    image = np.array(image, dtype=np.uint8)
+    plt.figure(figsize=figsize)
+    plt.axis("off")
+    plt.imshow(image)
+    timenow = datetime.now()
+    timestamp = timenow.strftime("%Y_%m_%d_%H_%M_%S")
+    plt.savefig(timestamp+"test_save.png")
+    plt.show()
+
+
+# pdb.set_trace()
+# for sample in train_dataset_cus.take(1):
+#     for _, image in enumerate(sample[0]):
+#         image_test(image)
+
+# for sample in train_dataset.take(1):
+#     for _, image in enumerate(sample[0]):
+#         image_test(image)
 
 # Uncomment the following lines, when training on full dataset
 # train_steps_per_epoch = dataset_info.splits["train"].num_examples // batch_size
@@ -88,18 +117,18 @@ val_dataset = val_dataset.prefetch(autotune)
 # train_steps = 4 * 100000
 # epochs = train_steps // train_steps_per_epoch
 
-epochs = 500
+epochs = 10
 
 # Running 100 training and 50 validation steps,
 # remove `.take` when training on the full dataset
 
-# model.fit(
-#     train_dataset,
-#     validation_data=val_dataset.take(50),
-#     epochs=epochs,
-#     callbacks=callbacks_list,
-#     verbose=1,
-# )
+model.fit(
+    train_dataset,
+    validation_data=val_dataset.take(50),
+    epochs=epochs,
+    callbacks=callbacks_list,
+    verbose=1,
+)
 
 # Change this to `model_dir` when not using the downloaded weights
 weights_dir = model_dir
@@ -157,16 +186,14 @@ def visualize_detections(
 #                            is_training=False,
 #                            for_test=True)
 val_dataset = tfds.load("voc/2007", split="validation", data_dir="data")
-int2str = dataset_info.features["objects"]["label"].int2str
+# int2str = dataset_info.features["objects"]["label"].int2str
 
 for sample in val_dataset.take(2):
     image = tf.cast(sample["image"], dtype=tf.float32)
     input_image, ratio = prepare_image(image)
     detections = inference_model.predict(input_image)
     num_detections = detections.valid_detections[0]
-    class_names = [
-        int2str(int(x)) for x in detections.nmsed_classes[0][:num_detections]
-    ]
+    class_names = class_voc
     visualize_detections(
         image,
         detections.nmsed_boxes[0][:num_detections] / ratio,
