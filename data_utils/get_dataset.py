@@ -3,6 +3,8 @@ import sys
 sys.path.append('..')
 from utils.label_encoder import LabelEncoder
 from utils.preprocessing_data import preprocess_data
+import matplotlib.pyplot as plt
+import numpy as np
 '''a tf dataset pipeline
 '''
 
@@ -36,10 +38,10 @@ def read_tfrecord(example):
     object_label = example['image/object/class/label']
     object_label = tf.dtypes.cast(object_label, tf.float32)
     object_label = tf.sparse.to_dense(object_label)
-    bboxes_xmin = tf.sparse.to_dense(example['image/object/bbox/xmin'])*img_width
-    bboxes_xmax = tf.sparse.to_dense(example['image/object/bbox/xmax'])*img_width
-    bboxes_ymin = tf.sparse.to_dense(example['image/object/bbox/ymin'])*img_height
-    bboxes_ymax = tf.sparse.to_dense(example['image/object/bbox/ymax'])*img_height
+    bboxes_xmin = tf.sparse.to_dense(example['image/object/bbox/xmin'])
+    bboxes_xmax = tf.sparse.to_dense(example['image/object/bbox/xmax'])
+    bboxes_ymin = tf.sparse.to_dense(example['image/object/bbox/ymin'])
+    bboxes_ymax = tf.sparse.to_dense(example['image/object/bbox/ymax'])
 
     sample = {}
     sample['image'] = image
@@ -60,12 +62,28 @@ def load_dataset(file):
 
     return dataset
 
+def image_test(
+    image, figsize=(7, 7)
+):
+    """Visualize Detections"""
+    # image = np.array(image, dtype=np.uint8)
+    plt.figure(figsize=figsize)
+    plt.axis("off")
+    plt.imshow(image)
+    plt.savefig("test_save.png")
+    plt.show()
 
 def get_dataset(filepath, batch_size, is_training, for_test=False):
     autotune = tf.data.experimental.AUTOTUNE
     label_encoder = LabelEncoder()
     file = tf.io.gfile.glob(filepath)
     dataset = load_dataset(file)
+
+    # for sample in dataset.take(1):
+    #     image_test(sample["image"])
+    #     import pdb; pdb.set_trace()
+
+
     if for_test:
         return dataset
     # process dataset by map-function
@@ -91,8 +109,8 @@ def get_dataset(filepath, batch_size, is_training, for_test=False):
     return dataset
 
 def main():
-    train_dataset = get_dataset(filepath='/workspace/data/cats_dogs/train/pets.tfrecord',
-                                batch_size=8)
+    train_dataset = get_dataset(filepath='/workspace/object_detection_api/data/voc/2007/4.0.0/voc-test.tfrecord-00001-of-00004',
+                                batch_size=2)
     import pdb; pdb.set_trace()
 
 if __name__ == '__main__':

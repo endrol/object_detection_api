@@ -16,7 +16,7 @@ from models.decode_detection import DecodePredictions
 from utils.retinanet_loss import RetinaNetLoss
 from utils.preprocessing_data import preprocess_data, resize_and_pad_image
 from datetime import datetime
-    
+
 
 model_dir = "retinanet/"
 class_voc = ['background',
@@ -52,6 +52,17 @@ callbacks_list = [
     )
 ]
 
+def image_test(
+    image, figsize=(7, 7)
+):
+    """Visualize Detections"""
+    # image = np.array(image, dtype=np.uint8)
+    plt.figure(figsize=figsize)
+    plt.axis("off")
+    plt.imshow(image)
+    plt.savefig("test_save.png")
+    plt.show()
+
 '''load dataset both customized and official
 '''
 train_dataset = get_dataset(filepath='/workspace/data/voc_tf/train.record',
@@ -61,9 +72,12 @@ val_dataset = get_dataset(filepath='/workspace/data/voc_tf/val.record',
                           batch_size=batch_size,
                           is_training=False)
 # label_encoder = LabelEncoder()
-# (train_dataset, val_dataset), dataset_info = tfds.load(
+# (train_dataset_tfds, val_dataset_tfds), dataset_info = tfds.load(
 #     "voc/2007", split=["train", "validation"], with_info=True, data_dir="data"
 # )
+# for sample in train_dataset_tfds.take(1):
+#     image_test(sample["image"])
+#     pdb.set_trace()
 
 # autotune = tf.data.experimental.AUTOTUNE
 # train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=autotune)
@@ -86,28 +100,7 @@ val_dataset = get_dataset(filepath='/workspace/data/voc_tf/val.record',
 # val_dataset = val_dataset.prefetch(autotune)
 
 
-def image_test(
-    image, figsize=(7, 7)
-):
-    """Visualize Detections"""
-    image = np.array(image, dtype=np.uint8)
-    plt.figure(figsize=figsize)
-    plt.axis("off")
-    plt.imshow(image)
-    timenow = datetime.now()
-    timestamp = timenow.strftime("%Y_%m_%d_%H_%M_%S")
-    plt.savefig(timestamp+"test_save.png")
-    plt.show()
 
-
-# pdb.set_trace()
-# for sample in train_dataset_cus.take(1):
-#     for _, image in enumerate(sample[0]):
-#         image_test(image)
-
-# for sample in train_dataset.take(1):
-#     for _, image in enumerate(sample[0]):
-#         image_test(image)
 
 # Uncomment the following lines, when training on full dataset
 # train_steps_per_epoch = dataset_info.splits["train"].num_examples // batch_size
@@ -117,7 +110,7 @@ def image_test(
 # train_steps = 4 * 100000
 # epochs = train_steps // train_steps_per_epoch
 
-epochs = 10
+epochs = 500
 
 # Running 100 training and 50 validation steps,
 # remove `.take` when training on the full dataset
