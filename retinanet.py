@@ -19,7 +19,6 @@ from utils.preprocessing_data import preprocess_data, resize_and_pad_image
 from datetime import datetime
 
 
-model_dir = "retinanet/"
 class_voc = ['background',
              'aeroplane', 'bicycle', 'bird', 'boat',
              'bottle', 'bus', 'car', 'cat',
@@ -43,13 +42,17 @@ model = RetinaNet(num_classes, resnet50_backbone)
 optimizer = tf.optimizers.SGD(learning_rate=learning_rate_fn, momentum=0.9)
 model.compile(loss=loss_fn, optimizer=optimizer)
 
+time_stamp = datetime.now().strftime("%m_%d_%H_%M")
 callbacks_list = [
     tf.keras.callbacks.ModelCheckpoint(
-        filepath=os.path.join(model_dir, "weights" + "_epoch_{epoch}"),
-        monitor="loss",
-        save_best_only=False,
-        save_weights_only=True,
+        filepath='/workspace/object_detection_api/tensorboard_save/'+time_stamp+'/train/'+"weights" + "_epoch_{epoch}",
+        monitor="val_loss",
+        save_best_only=True,
+        save_weights_only=False,
+        mode='auto',
+        save_freq='epoch',
         verbose=1,
+        period=2
     )
 ]
 
@@ -100,7 +103,7 @@ val_dataset = get_dataset(filepath='/workspace/data/voc_tf/val.record',
 # val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
 # val_dataset = val_dataset.prefetch(autotune)
 
-time_stamp = datetime.now().strftime("%m_%d_%H_%M")
+
 tensorboard = TensorBoard(log_dir='/workspace/object_detection_api/tensorboard_save/'+time_stamp+'/',
                           histogram_freq=0,
                           write_graph=True,
@@ -112,9 +115,9 @@ csv_logger = CSVLogger(filename='/workspace/object_detection_api/tensorboard_sav
                         separator='.',
                         append=True)
 terminate_on_nan = TerminateOnNaN()
-reducelronplateau = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10,verbose=1)
+# reducelronplateau = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10, verbose=1)
 
-callbacks_list.extend([tensorboard, csv_logger,terminate_on_nan, reducelronplateau])
+callbacks_list.extend([tensorboard, csv_logger,terminate_on_nan])
 
 epochs = 500
 start_epoch = 0
@@ -132,16 +135,14 @@ if len(weights_dir) > 0:
 # Running 100 training and 50 validation steps,
 # remove `.take` when training on the full dataset
 
-# model.fit(
-#     train_dataset,
-#     validation_data=val_dataset.take(50),
-#     epochs=epochs,
-#     callbacks=callbacks_list,
-#     verbose=1,
-#     initial_epoch=start_epoch
-# )
-
-
+model.fit(
+    train_dataset,
+    validation_data=val_dataset.take(50),
+    epochs=epochs,
+    callbacks=callbacks_list,
+    verbose=1,
+    initial_epoch=start_epoch
+)
 
 
 
