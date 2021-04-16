@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import tensorflow_datasets as tfds
 from utils.label_encoder import LabelEncoder
 from data_utils.get_dataset import get_dataset
+from tensorflow.keras.callbacks import TensorBoard, CSVLogger, TerminateOnNaN, ReduceLROnPlateau
 from models.backbones import get_backbone
 from models.retinanet import RetinaNet
 from models.decode_detection import DecodePredictions
@@ -27,7 +28,7 @@ class_voc = ['background',
              'sheep', 'sofa', 'train', 'tvmonitor']
 
 num_classes = 20
-batch_size = 2
+batch_size = 8
 
 learning_rates = [2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
 learning_rate_boundaries = [125, 250, 500, 240000, 360000]
@@ -99,35 +100,50 @@ val_dataset = get_dataset(filepath='/workspace/data/voc_tf/val.record',
 # val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
 # val_dataset = val_dataset.prefetch(autotune)
 
+time_stamp = datetime.now().strftime("%m_%d_%H_%M")
+tensorboard = TensorBoard(log_dir='/workspace/object_detection_api/tensorboard_save/'+time_stamp+'/',
+                          histogram_freq=0,
+                          write_graph=True,
+                          write_images=True,
+                          update_freq='epoch',
+                          profile_batch=2,
+                          embeddings_freq=0)
+csv_logger = CSVLogger(filename='/workspace/object_detection_api/tensorboard_save/'+time_stamp+'/train/'+'training_log.csv',
+                        separator='.',
+                        append=True)
+terminate_on_nan = TerminateOnNaN()
+reducelronplateau = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10,verbose=1)
 
-
-
-# Uncomment the following lines, when training on full dataset
-# train_steps_per_epoch = dataset_info.splits["train"].num_examples // batch_size
-# val_steps_per_epoch = \
-#     dataset_info.splits["validation"].num_examples // batch_size
-
-# train_steps = 4 * 100000
-# epochs = train_steps // train_steps_per_epoch
+callbacks_list.extend([tensorboard, csv_logger,terminate_on_nan, reducelronplateau])
 
 epochs = 500
+start_epoch = 0
+weights_dir = '/workspace/object_detection_api/retinanet/weights_epoch_33'
+if len(weights_dir) > 0:
+    start_epoch = int(weights_dir.split('epoch_')[1])
+    model.load_weights(weights_dir)
+# Change this to `model_dir` when not using the downloaded weights
+# /workspace/object_detection_api/retinanet/weights_epoch_17
+
+# latest_checkpoint = tf.train.latest_checkpoint(weights_dir)
+
+
 
 # Running 100 training and 50 validation steps,
 # remove `.take` when training on the full dataset
 
-model.fit(
-    train_dataset,
-    validation_data=val_dataset.take(50),
-    epochs=epochs,
-    callbacks=callbacks_list,
-    verbose=1,
-)
+# model.fit(
+#     train_dataset,
+#     validation_data=val_dataset.take(50),
+#     epochs=epochs,
+#     callbacks=callbacks_list,
+#     verbose=1,
+#     initial_epoch=start_epoch
+# )
 
-# Change this to `model_dir` when not using the downloaded weights
-weights_dir = model_dir
 
-latest_checkpoint = tf.train.latest_checkpoint(weights_dir)
-model.load_weights(latest_checkpoint)
+
+
 
 image = tf.keras.Input(shape=[None, None, 3], name="image")
 predictions = model(image, training=False)
@@ -143,7 +159,7 @@ def prepare_image(image):
     return tf.expand_dims(image, axis=0), ratio
 
 def visualize_detections(
-    image, boxes, classes, scores, figsize=(7, 7), linewidth=1, color=[1, 0, 1]
+    index, image, boxes, classes, scores, figsize=(7, 7), linewidth=1, color=[1, 0, 1]
 ):
     """Visualize Detections"""
     image = np.array(image, dtype=np.uint8)
@@ -167,9 +183,7 @@ def visualize_detections(
             clip_box=ax.clipbox,
             clip_on=True,
         )
-    timenow = datetime.now()
-    timestamp = timenow.strftime("%Y_%m_%d_%H_%M_%S")
-    plt.savefig(timestamp+"test_save.png")
+    plt.savefig('/workspace/data/save_retinanet/'+index+"test_save.png")
     plt.show()
     return ax
 
@@ -181,13 +195,14 @@ def visualize_detections(
 val_dataset = tfds.load("voc/2007", split="validation", data_dir="data")
 # int2str = dataset_info.features["objects"]["label"].int2str
 
-for sample in val_dataset.take(2):
+for i, sample in enumerate(val_dataset.take(100)):
     image = tf.cast(sample["image"], dtype=tf.float32)
     input_image, ratio = prepare_image(image)
     detections = inference_model.predict(input_image)
     num_detections = detections.valid_detections[0]
-    class_names = class_voc
-    visualize_detections(
+    class_names = [class_voc[int(label_class)] for label_class in detections.nmsed_classes[0][:num_detections]]
+    # pdb.set_trace()
+    visualize_detections(str(i),
         image,
         detections.nmsed_boxes[0][:num_detections] / ratio,
         class_names,

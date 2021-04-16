@@ -25,7 +25,7 @@ def random_flip_horizontal(image, boxes):
 
 
 def resize_and_pad_image(
-    image, min_side=240.0, max_side=300.0, jitter=[240, 240], stride=128.0
+    image, min_side=224.0, max_side=224.0, jitter=[224, 224], stride=128.0
 ):
     """Resizes and pads image while preserving aspect ratio.
 
@@ -68,6 +68,9 @@ def resize_and_pad_image(
     image = tf.image.pad_to_bounding_box(
         image, 0, 0, padded_image_shape[0], padded_image_shape[1]
     )
+    # ratio = jitter[0] / tf.reduce_max(image[1])
+    # image = tf.image.resize(image, jitter)
+    # image_shape = tf.cast(tf.shape(image)[:2], dtype=tf.float32)
     return image, image_shape, ratio
 
 
