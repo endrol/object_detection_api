@@ -19,12 +19,7 @@ from utils.preprocessing_data import preprocess_data, resize_and_pad_image
 from datetime import datetime
 
 
-class_voc = ['background',
-             'aeroplane', 'bicycle', 'bird', 'boat',
-             'bottle', 'bus', 'car', 'cat',
-             'chair', 'cow', 'diningtable', 'dog',
-             'horse', 'motorbike', 'person', 'pottedplant',
-             'sheep', 'sofa', 'train', 'tvmonitor']
+
 
 num_classes = 20
 batch_size = 8
