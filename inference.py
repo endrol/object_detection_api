@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from utils.preprocessing_data import resize_and_pad_image
 import tensorflow_datasets as tfds
 from models.decode_detection import DecodePredictions
+from utils.retinanet_loss import RetinaNetLoss
 '''inference model based on save_model or save_weights
 '''
 
@@ -59,8 +60,8 @@ def visualize_detections(
 
 
 def main():
-    model_path = '/workspace/object_detection_api/tensorboard_save/04_16_06_50/train//workspace/object_detection_api/tensorboard_save/04_16_06_50/train/weights_epoch_35.data-00000-of-00001'
-    model = keras.models.load_model(model_path)
+    model_path = '/workspace/object_detection_api/tensorboard_save/04_19_06_20/frozen/model'
+    model = keras.models.load_model(model_path, compile=False)
     val_dataset = tfds.load("voc/2007", split="validation", data_dir="data")
 
     image = tf.keras.Input(shape=[None, None, 3], name="image")
@@ -70,17 +71,17 @@ def main():
 
     for i, sample in enumerate(val_dataset.take(100)):
         image = tf.cast(sample["image"], dtype=tf.float32)
-    input_image, ratio = prepare_image(image)
-    detections = inference_model.predict(input_image)
-    num_detections = detections.valid_detections[0]
-    class_names = [class_voc[int(label_class)] for label_class in detections.nmsed_classes[0][:num_detections]]
-    # pdb.set_trace()
-    visualize_detections(str(i),
-        image,
-        detections.nmsed_boxes[0][:num_detections] / ratio,
-        class_names,
-        detections.nmsed_scores[0][:num_detections],
-    )
+        input_image, ratio = prepare_image(image)
+        detections = inference_model.predict(input_image)
+        num_detections = detections.valid_detections[0]
+        class_names = [class_voc[int(label_class)] for label_class in detections.nmsed_classes[0][:num_detections]]
+        # pdb.set_trace()
+        visualize_detections(str(i),
+            image,
+            detections.nmsed_boxes[0][:num_detections] / ratio,
+            class_names,
+            detections.nmsed_scores[0][:num_detections],
+        )
 
 
 if __name__ == '__main__':

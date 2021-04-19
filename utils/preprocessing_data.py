@@ -54,23 +54,24 @@ def resize_and_pad_image(
       image_shape: Shape of the image before padding.
       ratio: The scaling factor used to resize the image
     """
-    # image_shape = tf.cast(tf.shape(image)[:2], dtype=tf.float32)
-    # if jitter is not None:
-    #     min_side = tf.random.uniform((), jitter[0], jitter[1], dtype=tf.float32)
-    # ratio = min_side / tf.reduce_min(image_shape)
-    # if ratio * tf.reduce_max(image_shape) > max_side:
-    #     ratio = max_side / tf.reduce_max(image_shape)
-    # image_shape = ratio * image_shape
-    # image = tf.image.resize(image, tf.cast(image_shape, dtype=tf.int32))
-    # padded_image_shape = tf.cast(
-    #     tf.math.ceil(image_shape / stride) * stride, dtype=tf.int32
-    # )
-    # image = tf.image.pad_to_bounding_box(
-    #     image, 0, 0, padded_image_shape[0], padded_image_shape[1]
-    # )
-    ratio = jitter[0] / tf.reduce_max(image[1])
-    image = tf.image.resize(image, jitter)
+    # import pdb; pdb.set_trace()
     image_shape = tf.cast(tf.shape(image)[:2], dtype=tf.float32)
+    if jitter is not None:
+        min_side = tf.random.uniform((), jitter[0], jitter[1], dtype=tf.float32)
+    ratio = min_side / tf.reduce_min(image_shape)
+    if ratio * tf.reduce_max(image_shape) > max_side:
+        ratio = max_side / tf.reduce_max(image_shape)
+    image_shape = ratio * image_shape
+    image = tf.image.resize(image, tf.cast(image_shape, dtype=tf.int32))
+    padded_image_shape = tf.cast(
+        tf.math.ceil(image_shape / stride) * stride, dtype=tf.int32
+    )
+    image = tf.image.pad_to_bounding_box(
+        image, 0, 0, padded_image_shape[0], padded_image_shape[1]
+    )
+    # ratio = jitter[0] / tf.reduce_max(image[1])
+    # image = tf.image.resize(image, jitter)
+    # image_shape = tf.cast(tf.shape(image)[:2], dtype=tf.float32)
     return image, image_shape, ratio
 
 

@@ -114,9 +114,9 @@ terminate_on_nan = TerminateOnNaN()
 
 callbacks_list.extend([tensorboard, csv_logger,terminate_on_nan])
 
-epochs = 500
+epochs = 4
 start_epoch = 0
-weights_dir = '/workspace/object_detection_api/retinanet/weights_epoch_33'
+weights_dir = ''
 if len(weights_dir) > 0:
     start_epoch = int(weights_dir.split('epoch_')[1])
     model.load_weights(weights_dir)
@@ -139,7 +139,10 @@ model.fit(
     initial_epoch=start_epoch
 )
 
+pdb.set_trace()
 
+
+model.save('/workspace/object_detection_api/tensorboard_save/'+time_stamp+'/frozen/model')
 
 image = tf.keras.Input(shape=[None, None, 3], name="image")
 predictions = model(image, training=False)
