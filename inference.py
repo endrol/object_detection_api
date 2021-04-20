@@ -1,6 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras as keras
 import numpy as np
+import argparse
 import matplotlib.pyplot as plt
 from utils.preprocessing_data import resize_and_pad_image
 import tensorflow_datasets as tfds
@@ -9,6 +10,7 @@ from utils.retinanet_loss import RetinaNetLoss
 '''inference model based on save_model or save_weights
 '''
 
+
 class_voc = ['background',
              'aeroplane', 'bicycle', 'bird', 'boat',
              'bottle', 'bus', 'car', 'cat',
@@ -16,10 +18,25 @@ class_voc = ['background',
              'horse', 'motorbike', 'person', 'pottedplant',
              'sheep', 'sofa', 'train', 'tvmonitor']
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Visualize inferenece results")
+    parser.add_argument(
+        "-m",
+        "--model",
+        help="path to the saved model",
+        type=str,
+        required=True
+    )
+    args = parser.parse_args()
+    return args
+
+
 def prepare_image(image):
     image, _, ratio = resize_and_pad_image(image, jitter=None)
     image = tf.keras.applications.resnet.preprocess_input(image)
     return tf.expand_dims(image, axis=0), ratio
+
 
 def visualize_detections(
     index, image, boxes, classes, scores, figsize=(7, 7), linewidth=1, color=[1, 0, 1]
@@ -60,27 +77,25 @@ def visualize_detections(
 
 
 def main():
-    model_path = '/workspace/object_detection_api/tensorboard_save/04_19_06_20/frozen/model'
-    model = keras.models.load_model(model_path, compile=False)
+    args = parse_args()
+
+    inference_model = keras.models.load_model(args.model, compile=False)
     val_dataset = tfds.load("voc/2007", split="validation", data_dir="data")
 
-    image = tf.keras.Input(shape=[None, None, 3], name="image")
-    predictions = model(image, training=False)
-    detections = DecodePredictions(confidence_threshold=0.5)(image, predictions)
-    inference_model = tf.keras.Model(inputs=image, outputs=detections)
-
     for i, sample in enumerate(val_dataset.take(100)):
+
         image = tf.cast(sample["image"], dtype=tf.float32)
         input_image, ratio = prepare_image(image)
+        # detection is returned by tf.image.combined_non_max_suppression
         detections = inference_model.predict(input_image)
-        num_detections = detections.valid_detections[0]
-        class_names = [class_voc[int(label_class)] for label_class in detections.nmsed_classes[0][:num_detections]]
-        # pdb.set_trace()
+        num_detections = detections[3][0]
+        class_names = [class_voc[int(label_class)] for label_class in detections[2][0][:num_detections]]
+
         visualize_detections(str(i),
             image,
-            detections.nmsed_boxes[0][:num_detections] / ratio,
+            detections[0][0][:num_detections] / ratio,
             class_names,
-            detections.nmsed_scores[0][:num_detections],
+            detections[1][0][:num_detections],
         )
 
 
