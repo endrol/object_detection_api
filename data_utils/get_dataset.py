@@ -7,14 +7,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 '''a tf dataset pipeline
 '''
-
+# TODO get dataset from images as well
 
 def decode_image(image):
     image = tf.io.decode_jpeg(image, channels=3)
     # if not IS_TRAINING:
     #     image = tf.image.resize(image, IMG_SIZE)
     return image
-
 
 
 def read_tfrecord(example):
