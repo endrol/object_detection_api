@@ -35,12 +35,12 @@ def parse_args():
         required=True,
     )
 
-    parser.add_argument("--n_classes", help="number of classes", type=int, default=20)
+    parser.add_argument("--n_classes", help="number of classes", type=int, default=10)
 
     parser.add_argument("--batchsize", help="batch size", type=int, default=8)
 
     parser.add_argument(
-        "--epochs", help="number of training epochs", type=int, default=10
+        "--epochs", help="number of training epochs", type=int, default=100
     )
 
     parser.add_argument(

@@ -1,0 +1,44 @@
+{
+    "classes": {
+        "1":{
+            "name":"center",
+            "color": [225, 0, 225]
+        },
+        "2":{
+            "name": "center_post",
+            "color": [0, 225, 225]
+        },
+        "3":{
+            "name": "face",
+            "color": [0, 0, 255]
+        },
+        "4":{
+            "name": "hercules_front",
+            "color": [45, 0, 100]
+        },
+        "5":{
+            "name": "hercules_side",
+            "color": [120, 90, 0]
+        },
+        "6":{
+            "name": "left_post",
+            "color": [210, 90, 89]
+        },
+        "7":{
+            "name": "left_side",
+            "color": [255, 0, 0]
+        },
+        "8":{
+            "name": "right_post",
+            "color": [46, 122, 5]
+        },
+        "9":{
+            "name": "right_side",
+            "color": [0, 255, 0]
+        },
+        "10":{
+            "name": "wooden_face",
+            "color": [0, 0, 0]
+        }
+    }
+}

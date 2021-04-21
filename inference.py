@@ -7,6 +7,7 @@ from utils.preprocessing_data import resize_and_pad_image
 import tensorflow_datasets as tfds
 from models.decode_detection import DecodePredictions
 from utils.retinanet_loss import RetinaNetLoss
+from data_utils.get_dataset import get_dataset
 '''inference model based on save_model or save_weights
 '''
 
@@ -18,6 +19,9 @@ class_voc = ['background',
              'horse', 'motorbike', 'person', 'pottedplant',
              'sheep', 'sofa', 'train', 'tvmonitor']
 
+class_pallet = ['backgroud', 'center', 'center_post', 'face', 'hercules_front', 'hercules_side',
+                'left_post', 'left_side', 'right_post', 'right_side', 'wooden_face']
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Visualize inferenece results")
@@ -28,6 +32,15 @@ def parse_args():
         type=str,
         required=True
     )
+
+    parser.add_argument(
+        "-t",
+        "--testdata",
+        help="path to the test dataset",
+        type=str,
+        default="/workspace/data/cart6lf_palletgrayscale_0419/annotations/valid.record"
+    )
+
     args = parser.parse_args()
     return args
 
@@ -63,7 +76,7 @@ def visualize_detections(
             clip_box=ax.clipbox,
             clip_on=True,
         )
-    plt.savefig('/workspace/data/save_retinanet/'+index+"test_save.png")
+    plt.savefig('/workspace/data/retinanet_save/'+index+"test_save.png")
     plt.show()
     return ax
 
@@ -81,7 +94,11 @@ def main():
 
     inference_model = keras.models.load_model(args.model, compile=False)
     val_dataset = tfds.load("voc/2007", split="validation", data_dir="data")
-
+    val_dataset = get_dataset(filepath=args.testdata,
+                           batch_size=0,
+                           is_training=False,
+                           for_test=True)
+    import pdb; pdb.set_trace()
     for i, sample in enumerate(val_dataset.take(100)):
 
         image = tf.cast(sample["image"], dtype=tf.float32)
@@ -89,7 +106,7 @@ def main():
         # detection is returned by tf.image.combined_non_max_suppression
         detections = inference_model.predict(input_image)
         num_detections = detections[3][0]
-        class_names = [class_voc[int(label_class)] for label_class in detections[2][0][:num_detections]]
+        class_names = [class_pallet[int(label_class)] for label_class in detections[2][0][:num_detections]]
 
         visualize_detections(str(i),
             image,
