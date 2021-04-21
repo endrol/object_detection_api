@@ -5,6 +5,7 @@ from utils.label_encoder import LabelEncoder
 from utils.preprocessing_data import preprocess_data
 import matplotlib.pyplot as plt
 import numpy as np
+import pdb
 '''a tf dataset pipeline
 '''
 # TODO get dataset from images as well
@@ -78,9 +79,9 @@ def get_dataset(filepath, batch_size, is_training, for_test=False):
     file = tf.io.gfile.glob(filepath)
     dataset = load_dataset(file)
 
-    # for sample in dataset.take(1):
-    #     image_test(sample["image"])
-    #     import pdb; pdb.set_trace()
+    for sample in dataset.take(1):
+        image_test(sample["image"])
+        # pdb.set_trace()
 
 
     if for_test:
@@ -108,9 +109,10 @@ def get_dataset(filepath, batch_size, is_training, for_test=False):
     return dataset
 
 def main():
-    train_dataset = get_dataset(filepath='/workspace/object_detection_api/data/voc/2007/4.0.0/voc-test.tfrecord-00001-of-00004',
+    train_dataset = get_dataset(filepath='/workspace/data/cats_dogs/test/pets.tfrecord', is_training=False, for_test=True,
                                 batch_size=2)
-    import pdb; pdb.set_trace()
+    for sample in train_dataset.take(1):
+        pdb.set_trace()
 
 if __name__ == '__main__':
     main()

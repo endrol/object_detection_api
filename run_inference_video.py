@@ -50,6 +50,19 @@ def parse_args():
         default="pallet.json"
     )
 
+    parser.add_argument(
+        "--low_thresh",
+        help="Minimum score of the detected boxes to show",
+        type=float,
+        default=0.2,
+    )
+    parser.add_argument(
+        "--high_thresh",
+        help="heigh threshold that be considered good detection",
+        type=float,
+        default=0.6,
+    )
+
     args = parser.parse_args()
     return args
 
@@ -109,8 +122,18 @@ def main():
         img_path = os.path.join(args.input_dir, img_file)
         img = cv2.imread(img_path)
         cols, rows = img.shape[1], img.shape[0]
+        img, _ = prepare_image(img)
+        detections = inference_model.predict(img)
+        num_detections = int(detections[3][0])
 
-        detections = inference_model
+        for i in range(num_detections):
+            score = detections[1][0][i]
+            if score < args.low_thresh:
+                continue
+            bbox = detections[2][0][i]
+            x1, y1, x2, y2 = bbox
+            class_name
+
 
     for i, sample in enumerate(val_dataset.take(100)):
 
