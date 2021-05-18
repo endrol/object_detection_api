@@ -47,7 +47,7 @@ def parse_args():
 
 def prepare_image(image):
     image, _, ratio = resize_and_pad_image(image, jitter=None)
-    image = tf.keras.applications.resnet.preprocess_input(image)
+    # image = tf.keras.applications.resnet.preprocess_input(image)
     return tf.expand_dims(image, axis=0), ratio
 
 

@@ -2,21 +2,20 @@ import os
 import argparse
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from utils.label_encoder import LabelEncoder
+from tensorflow.python.framework import config
 from data_utils.get_dataset import get_dataset
 from tensorflow.keras.callbacks import (
     TensorBoard,
     CSVLogger,
     TerminateOnNaN,
-    ReduceLROnPlateau,
     ModelCheckpoint,
 )
 from models.backbones import get_backbone
 from models.retinanet import RetinaNet
 from models.decode_detection import DecodePredictions
 from utils.retinanet_loss import RetinaNetLoss
-from utils.preprocessing_data import preprocess_data, resize_and_pad_image
 from datetime import datetime
+import wandb
 
 
 def parse_args():
@@ -99,7 +98,6 @@ def get_callbacks(time_stamp):
     )
 
     terminate_on_nan = TerminateOnNaN()
-    # reducelronplateau = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10, verbose=1)
     return [tensorboard, model_checkpoint, csv_logger, terminate_on_nan]
 
 
@@ -116,27 +114,40 @@ def get_optimizer():
 def main():
     args = parse_args()
     time_stamp = datetime.now().strftime("%m_%d_%H_%M")
+    wandb.init(
+        project="object_detection_api",
+        config={
+            "dataset": args.traindata,
+            "batchsize": args.batchsize,
+            "n_classes": args.n_classes,
+            "epochs": args.epochs,
+            "checkpoint": args.checkpoint,
+            "f_name": time_stamp
+        },
+        sync_tensorboard=True
+        )
+    wandb_config = wandb.config
 
     resnet50_backbone = get_backbone()
-    loss_fn = RetinaNetLoss(args.n_classes)
-    model = RetinaNet(args.n_classes, resnet50_backbone)
+    loss_fn = RetinaNetLoss(wandb_config.n_classes)
+    model = RetinaNet(wandb_config.n_classes, resnet50_backbone)
 
     model.compile(loss=loss_fn, optimizer=get_optimizer())
 
     """load dataset both customized and official
     """
     train_dataset = get_dataset(
-        filepath=args.traindata, batch_size=args.batchsize, is_training=True
+        filepath=args.traindata, batch_size=wandb_config.batchsize, is_training=True
     )
     val_dataset = get_dataset(
-        filepath=args.validdata, batch_size=args.batchsize, is_training=False
+        filepath=args.validdata, batch_size=wandb_config.batchsize, is_training=False
     )
 
     # load checkpoint if parsed
     start_epoch = 0
-    if len(args.checkpoint) > 0:
-        start_epoch = int(args.checkpoint.split("epoch_")[1])
-        model.load_weights(args.checkpoint)
+    if len(wandb_config.checkpoint) > 0:
+        start_epoch = int(wandb_config.checkpoint.split("epoch_")[1])
+        model.load_weights(wandb_config.checkpoint)
 
     # Running 100 training and 50 validation steps,
     # remove `.take` when training on the full dataset
@@ -144,7 +155,7 @@ def main():
     model.fit(
         train_dataset,
         validation_data=val_dataset.take(50),
-        epochs=args.epochs,
+        epochs=wandb_config.epochs,
         callbacks=get_callbacks(time_stamp),
         verbose=1,
         initial_epoch=start_epoch,

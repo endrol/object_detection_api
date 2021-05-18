@@ -62,6 +62,7 @@ def load_dataset(file):
 
     return dataset
 
+
 def image_test(
     image, figsize=(7, 7)
 ):
@@ -73,6 +74,7 @@ def image_test(
     plt.savefig("test_save.png")
     plt.show()
 
+
 def get_dataset(filepath, batch_size, is_training, for_test=False):
     autotune = tf.data.experimental.AUTOTUNE
     label_encoder = LabelEncoder()
@@ -82,7 +84,6 @@ def get_dataset(filepath, batch_size, is_training, for_test=False):
     for sample in dataset.take(1):
         image_test(sample["image"])
         # pdb.set_trace()
-
 
     if for_test:
         return dataset
@@ -99,13 +100,6 @@ def get_dataset(filepath, batch_size, is_training, for_test=False):
     dataset = dataset.apply(tf.data.experimental.ignore_errors())
     dataset = dataset.prefetch(autotune)
 
-    # val_dataset = val_dataset.map(preprocess_data, num_parallel_calls=autotune)
-    # val_dataset = val_dataset.padded_batch(
-    #     batch_size=1, padding_values=(0.0, 1e-8, -1), drop_remainder=True
-    # )
-    # val_dataset = val_dataset.map(label_encoder.encode_batch, num_parallel_calls=autotune)
-    # val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
-    # val_dataset = val_dataset.prefetch(autotune)
     return dataset
 
 def main():

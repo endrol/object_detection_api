@@ -1,4 +1,3 @@
-import pdb
 import tensorflow as tf
 import tensorflow.keras as keras
 import numpy as np
@@ -16,13 +15,6 @@ from draw_rectangle import draw_rectangle
 '''inference model based on save_model or save_weights
 use opencv to draw the images and bboxes
 '''
-
-# from tensorflow.compat.v1 import ConfigProto
-# from tensorflow.compat.v1 import InteractiveSession
-
-# config = ConfigProto()
-# config.gpu_options.allow_growth = True
-# session = InteractiveSession(config=config)
 
 
 def parse_args():
@@ -84,9 +76,9 @@ def load_config(filename=None):
 
 
 def prepare_image(image):
-    image = resize_and_pad_image(image, jitter=None)
-    # image = tf.keras.applications.resnet.preprocess_input(image)
-    return tf.expand_dims(image, axis=0)
+    image, _, ratio = resize_and_pad_image(image, jitter=None)
+    image = tf.keras.applications.resnet.preprocess_input(image)
+    return tf.expand_dims(image, axis=0), ratio
 
 
 def main():
@@ -112,7 +104,7 @@ def main():
         img = cv2.imread(img_path)
         # import pdb; pdb.set_trace()
         cols, rows = img.shape[1], img.shape[0]
-        img_t = prepare_image(img)
+        img_t, _ = prepare_image(img)
         detections = inference_model.predict(img_t)
         # import pdb; pdb.set_trace()
         num_detections = int(detections[3][0])
