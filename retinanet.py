@@ -39,7 +39,7 @@ def parse_args():
     parser.add_argument("--batchsize", help="batch size", type=int, default=8)
 
     parser.add_argument(
-        "--epochs", help="number of training epochs", type=int, default=100
+        "--epochs", help="number of training epochs", type=int, default=35
     )
 
     parser.add_argument(
@@ -47,7 +47,7 @@ def parse_args():
         "--checkpoint",
         help="path to the load checkpoint weight",
         type=str,
-        default="",
+        default="/workspace/object_detection_api/tensorboard_save/05_18_02_54/train/weights_epoch_28",
     )
 
     args = parser.parse_args()

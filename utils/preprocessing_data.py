@@ -25,7 +25,7 @@ def random_flip_horizontal(image, boxes):
 
 
 def resize_and_pad_image(
-    image, min_side=300.0, max_side=300.0, jitter=[300, 300], stride=128.0
+    image,jitter=[224, 224]
 ):
     """Resizes and pads image while preserving aspect ratio.
 
@@ -71,8 +71,8 @@ def resize_and_pad_image(
 
     # ratio = jitter[0] / tf.reduce_max(image[1])
     image = tf.image.resize(image, jitter)
-    # image_shape = tf.cast(tf.shape(image)[:2], dtype=tf.float32)
-    return image
+    image_shape = tf.cast(tf.shape(image)[:2], dtype=tf.float32)
+    return image, image_shape
 
 
 def preprocess_data(sample):
@@ -93,7 +93,7 @@ def preprocess_data(sample):
     class_id = tf.cast(sample["objects"]["label"], dtype=tf.int32)
     # import pdb; pdb.set_trace()
     image, bbox = random_flip_horizontal(image, bbox)
-    image, image_shape, _ = resize_and_pad_image(image)
+    image, image_shape = resize_and_pad_image(image)
 
     bbox = tf.stack(
         [

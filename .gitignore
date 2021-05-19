@@ -9,3 +9,4 @@
 /data
 /tensorboard_save
 frozen_inference_graph.pb
+wandb*
