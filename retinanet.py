@@ -12,7 +12,7 @@ from tensorflow.keras.callbacks import (
 )
 from models.backbones import get_backbone
 from models.retinanet import RetinaNet
-from models.decode_detection import DecodePredictions
+from models.decode_detection import DecodePredictions, decode_prediction
 from utils.retinanet_loss import RetinaNetLoss
 from datetime import datetime
 import wandb
@@ -47,7 +47,7 @@ def parse_args():
         "--checkpoint",
         help="path to the load checkpoint weight",
         type=str,
-        default="/workspace/object_detection_api/tensorboard_save/05_18_02_54/train/weights_epoch_28",
+        default="",
     )
 
     args = parser.parse_args()
@@ -161,9 +161,12 @@ def main():
         initial_epoch=start_epoch,
     )
 
+    model.save(
+        os.path.join(os.getcwd(), "tensorboard_save/") + time_stamp + "/frozen/model"
+    )
     image = tf.keras.Input(shape=[None, None, 3], name="image")
     predictions = model(image, training=False)
-    detections = DecodePredictions(confidence_threshold=0.5)(image, predictions)
+    detections = decode_prediction(confidence_threshold=0.5, image_shape=[224, 224], predictions=predictions)
     inference_model = tf.keras.Model(inputs=image, outputs=detections)
     inference_model.save(
         os.path.join(os.getcwd(), "tensorboard_save/") + time_stamp + "/frozen/model"

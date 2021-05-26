@@ -84,7 +84,7 @@ def load_config(filename=None):
 
 
 def prepare_image(image):
-    image = resize_and_pad_image(image, jitter=None)
+    image, _ = resize_and_pad_image(image)
     # image = tf.keras.applications.resnet.preprocess_input(image)
     return tf.expand_dims(image, axis=0)
 

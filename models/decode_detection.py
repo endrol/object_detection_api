@@ -71,3 +71,38 @@ class DecodePredictions(tf.keras.layers.Layer):
             self.confidence_threshold,
             clip_boxes=False,
         )
+
+
+def _decode_box_predictions(anchor_boxes, box_predictions):
+    import pdb; pdb.set_trace()
+    _box_variance = tf.convert_to_tensor(
+            [0.1, 0.1, 0.2, 0.2], dtype=tf.float32
+        )
+    boxes = box_predictions * _box_variance
+    boxes = tf.concat(
+        [
+            boxes[:, :, :2] * anchor_boxes[:, :, 2:] + anchor_boxes[:, :, :2],
+            tf.math.exp(boxes[:, :, 2:]) * anchor_boxes[:, :, 2:],
+        ],
+        axis=-1,
+    )
+    boxes_transformed = convert_to_corners(boxes)
+    return boxes_transformed
+
+
+def decode_prediction(confidence_threshold, image_shape, predictions):
+    _anchor_box = AnchorBox()
+    anchor_boxes = _anchor_box.get_anchors(image_shape[0], image_shape[1])
+
+    box_predictions = predictions[:, :, :4]
+    cls_predictions = tf.nn.sigmoid(predictions[:, :, 4:])
+    boxes = _decode_box_predictions(anchor_boxes[None, ...], box_predictions)
+    return tf.image.combined_non_max_suppression(
+            tf.expand_dims(boxes, axis=2),
+            cls_predictions,
+            100,
+            100,
+            0.5,
+            confidence_threshold,
+            clip_boxes=False,
+            )
