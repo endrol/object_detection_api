@@ -85,7 +85,6 @@ def get_callbacks(time_stamp):
         mode="auto",
         save_freq="epoch",
         verbose=1,
-        period=2,
     )
 
     csv_logger = CSVLogger(
@@ -166,7 +165,7 @@ def main():
     )
     image = tf.keras.Input(shape=[None, None, 3], name="image")
     predictions = model(image, training=False)
-    detections = decode_prediction(confidence_threshold=0.5, image_shape=[224, 224], predictions=predictions)
+    detections = decode_prediction(confidence_threshold=0.5, image_shape=[224, 224], predictions=predictions, num_classes=10)
     inference_model = tf.keras.Model(inputs=image, outputs=detections)
     inference_model.save(
         os.path.join(os.getcwd(), "tensorboard_save/") + time_stamp + "/frozen/model"

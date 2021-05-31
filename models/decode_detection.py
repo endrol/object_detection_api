@@ -1,3 +1,4 @@
+import pdb
 import tensorflow as tf
 import sys
 sys.path.append('..')
@@ -74,7 +75,6 @@ class DecodePredictions(tf.keras.layers.Layer):
 
 
 def _decode_box_predictions(anchor_boxes, box_predictions):
-    import pdb; pdb.set_trace()
     _box_variance = tf.convert_to_tensor(
             [0.1, 0.1, 0.2, 0.2], dtype=tf.float32
         )
@@ -90,19 +90,31 @@ def _decode_box_predictions(anchor_boxes, box_predictions):
     return boxes_transformed
 
 
-def decode_prediction(confidence_threshold, image_shape, predictions):
+def decode_prediction(confidence_threshold, image_shape, predictions, num_classes):
     _anchor_box = AnchorBox()
     anchor_boxes = _anchor_box.get_anchors(image_shape[0], image_shape[1])
 
     box_predictions = predictions[:, :, :4]
     cls_predictions = tf.nn.sigmoid(predictions[:, :, 4:])
     boxes = _decode_box_predictions(anchor_boxes[None, ...], box_predictions)
-    return tf.image.combined_non_max_suppression(
-            tf.expand_dims(boxes, axis=2),
-            cls_predictions,
-            100,
+    boxes = tf.reshape(boxes, [-1, 4])
+    scores = tf.reshape(cls_predictions, [-1, num_classes])
+    labels = tf.math.argmax(scores, axis=1)
+    scores = tf.math.reduce_max(scores, axis=1)
+    pdb.set_trace()
+    unique_labels, which_one_in_unique_labels = tf.unique(labels)
+    chosen_indices = tf.zeros([0])
+    for index, unique_label in enumerate(unique_labels):
+        indices = tf.reshape(tf.where(which_one_in_unique_labels == index), -1)
+        selected_indices, _ = tf.image.non_max_suppression_with_scores(
+            tf.gather(boxes, indices),
+            tf.gather(scores, indices),
             100,
             0.5,
-            confidence_threshold,
-            clip_boxes=False,
-            )
+            0.5
+        )
+        chosen_indices = tf.concat([chosen_indices, tf.gather(indices, selected_indices)], axis=0)
+    big_range_scores = tf.gather(scores, chosen_indices)
+    final_indices = tf.gather(chosen_indices, tf.math.top_k(big_range_scores, k=100).indices)
+    pdb.set_trace()
+    return (tf.gather(boxes, final_indices), tf.gather(scores, final_indices), tf.gather(labels, final_indices), final_indices.shape[0])
